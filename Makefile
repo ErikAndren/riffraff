@@ -8,3 +8,4 @@ rif2rap: $(FILES)
 	$(CC) -o rif2rap $(CFLAGS) $(FILES)
 
 clean:
+	@rm -f rif2rap *~
