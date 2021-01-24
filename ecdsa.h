@@ -1,8 +1,9 @@
-#include <ppu-types.h>
+//#include <ppu-types.h>
+#include <stdint.h>
 
-int ecdsa_set_curve(u32 type);
-void ecdsa_set_pub(u8 *Q);
-void ecdsa_set_priv(u8 *k);
-void ecdsa_sign(u8 *hash, u8 *R, u8 *S);
+int ecdsa_set_curve(uint32_t type);
+void ecdsa_set_pub(uint8_t *Q);
+void ecdsa_set_priv(uint8_t *k);
+void ecdsa_sign(uint8_t *hash, uint8_t *R, uint8_t *S);
 
-void get_rand(u8 *dst, u32 len);
+void get_rand(uint8_t *dst, uint32_t len);

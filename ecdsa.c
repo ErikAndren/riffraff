@@ -4,49 +4,50 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "ecdsa.h"
 
-const u8 p_fixed[20] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x00,0x00,
+const uint8_t p_fixed[20] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x00,0x00,
 						0x00,0x01,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
-const u8 a_fixed[20] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x00,0x00,
+const uint8_t a_fixed[20] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x00,0x00,
 						0x00,0x01,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFC};
-const u8 b_fixed[20] = {0xA6,0x8B,0xED,0xC3,0x34,0x18,0x02,0x9C,0x1D,0x3C,
+const uint8_t b_fixed[20] = {0xA6,0x8B,0xED,0xC3,0x34,0x18,0x02,0x9C,0x1D,0x3C,
 						0xE3,0x3B,0x9A,0x32,0x1F,0xCC,0xBB,0x9E,0x0F,0x0B};
-const u8 n_fixed[21] = {0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFE,0xFF,
+const uint8_t n_fixed[21] = {0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFE,0xFF,
 						0xFF,0xB5,0xAE,0x3C,0x52,0x3E,0x63,0x94,0x4F,0x21,0x27};
-const u8 gx_fixed[20] = {0x12,0x8E,0xC4,0x25,0x64,0x87,0xFD,0x8F,0xDF,0x64,
+const uint8_t gx_fixed[20] = {0x12,0x8E,0xC4,0x25,0x64,0x87,0xFD,0x8F,0xDF,0x64,
 						0xE2,0x43,0x7B,0xC0,0xA1,0xF6,0xD5,0xAF,0xDE,0x2C};
-const u8 gy_fixed[20] = {0x59,0x58,0x55,0x7E,0xB1,0xDB,0x00,0x12,0x60,0x42,
+const uint8_t gy_fixed[20] = {0x59,0x58,0x55,0x7E,0xB1,0xDB,0x00,0x12,0x60,0x42,
 						0x55,0x24,0xDB,0xC3,0x79,0xD5,0xAC,0x5F,0x4A,0xDF};
 
 struct point {
-	u8 x[20];
-	u8 y[20];
+	uint8_t x[20];
+	uint8_t y[20];
 };
 
-static u8 ec_p[20];
-static u8 ec_a[20];	// mon
-static u8 ec_b[20];	// mon
-static u8 ec_N[21];
+static uint8_t ec_p[20];
+static uint8_t ec_a[20];	// mon
+static uint8_t ec_b[20];	// mon
+static uint8_t ec_N[21];
 static struct point ec_G;	// mon
 static struct point ec_Q;	// mon
-static u8 ec_k[21];
+static uint8_t ec_k[21];
 
 
-static void bn_zero(u8 *d, u32 n)
+static void bn_zero(uint8_t *d, uint32_t n)
 {
 	memset(d, 0, n);
 }
 
-void bn_copy(u8 *d, u8 *a, u32 n)
+void bn_copy(uint8_t *d, uint8_t *a, uint32_t n)
 {
 	memcpy(d, a, n);
 }
 
-int bn_compare(u8 *a, u8 *b, u32 n)
+int bn_compare(uint8_t *a, uint8_t *b, uint32_t n)
 {
-	u32 i;
+	uint32_t i;
 
 	for (i = 0; i < n; i++) {
 		if (a[i] < b[i])
@@ -58,11 +59,11 @@ int bn_compare(u8 *a, u8 *b, u32 n)
 	return 0;
 }
 
-static u8 bn_add_1(u8 *d, u8 *a, u8 *b, u32 n)
+static uint8_t bn_add_1(uint8_t *d, uint8_t *a, uint8_t *b, uint32_t n)
 {
-	u32 i;
-	u32 dig;
-	u8 c;
+	uint32_t i;
+	uint32_t dig;
+	uint8_t c;
 
 	c = 0;
 	for (i = n - 1; i < n; i--) {
@@ -74,11 +75,11 @@ static u8 bn_add_1(u8 *d, u8 *a, u8 *b, u32 n)
 	return c;
 }
 
-static u8 bn_sub_1(u8 *d, u8 *a, u8 *b, u32 n)
+static uint8_t bn_sub_1(uint8_t *d, uint8_t *a, uint8_t *b, uint32_t n)
 {
-	u32 i;
-	u32 dig;
-	u8 c;
+	uint32_t i;
+	uint32_t dig;
+	uint8_t c;
 
 	c = 1;
 	for (i = n - 1; i < n; i--) {
@@ -90,13 +91,13 @@ static u8 bn_sub_1(u8 *d, u8 *a, u8 *b, u32 n)
 	return 1 - c;
 }
 
-void bn_reduce(u8 *d, u8 *N, u32 n)
+void bn_reduce(uint8_t *d, uint8_t *N, uint32_t n)
 {
 	if (bn_compare(d, N, n) >= 0)
 		bn_sub_1(d, d, N, n);
 }
 
-void bn_add(u8 *d, u8 *a, u8 *b, u8 *N, u32 n)
+void bn_add(uint8_t *d, uint8_t *a, uint8_t *b, uint8_t *N, uint32_t n)
 {
 	if (bn_add_1(d, a, b, n))
 		bn_sub_1(d, d, N, n);
@@ -104,13 +105,13 @@ void bn_add(u8 *d, u8 *a, u8 *b, u8 *N, u32 n)
 	bn_reduce(d, N, n);
 }
 
-void bn_sub(u8 *d, u8 *a, u8 *b, u8 *N, u32 n)
+void bn_sub(uint8_t *d, uint8_t *a, uint8_t *b, uint8_t *N, uint32_t n)
 {
 	if (bn_sub_1(d, a, b, n))
 		bn_add_1(d, d, N, n);
 }
 
-static const u8 inv256[0x80] = {
+static const uint8_t inv256[0x80] = {
 	0x01, 0xab, 0xcd, 0xb7, 0x39, 0xa3, 0xc5, 0xef,
 	0xf1, 0x1b, 0x3d, 0xa7, 0x29, 0x13, 0x35, 0xdf,
 	0xe1, 0x8b, 0xad, 0x97, 0x19, 0x83, 0xa5, 0xcf,
@@ -129,12 +130,12 @@ static const u8 inv256[0x80] = {
 	0x11, 0x3b, 0x5d, 0xc7, 0x49, 0x33, 0x55, 0xff,
 };
 
-static void bn_mon_muladd_dig(u8 *d, u8 *a, u8 b, u8 *N, u32 n)
+static void bn_mon_muladd_dig(uint8_t *d, uint8_t *a, uint8_t b, uint8_t *N, uint32_t n)
 {
-	u32 dig;
-	u32 i;
+	uint32_t dig;
+	uint32_t i;
 
-	u8 z = -(d[n-1] + a[n-1]*b) * inv256[N[n-1]/2];
+	uint8_t z = -(d[n-1] + a[n-1]*b) * inv256[N[n-1]/2];
 
 	dig = d[n-1] + a[n-1]*b + N[n-1]*z;
 	dig >>= 8;
@@ -154,10 +155,10 @@ static void bn_mon_muladd_dig(u8 *d, u8 *a, u8 b, u8 *N, u32 n)
 	bn_reduce(d, N, n);
 }
 
-void bn_mon_mul(u8 *d, u8 *a, u8 *b, u8 *N, u32 n)
+void bn_mon_mul(uint8_t *d, uint8_t *a, uint8_t *b, uint8_t *N, uint32_t n)
 {
-	u8 t[512];
-	u32 i;
+	uint8_t t[512];
+	uint32_t i;
 
 	bn_zero(t, n);
 
@@ -167,28 +168,28 @@ void bn_mon_mul(u8 *d, u8 *a, u8 *b, u8 *N, u32 n)
 	bn_copy(d, t, n);
 }
 
-void bn_to_mon(u8 *d, u8 *N, u32 n)
+void bn_to_mon(uint8_t *d, uint8_t *N, uint32_t n)
 {
-	u32 i;
+	uint32_t i;
 
 	for (i = 0; i < 8*n; i++)
 		bn_add(d, d, d, N, n);
 }
 
-void bn_from_mon(u8 *d, u8 *N, u32 n)
+void bn_from_mon(uint8_t *d, uint8_t *N, uint32_t n)
 {
-	u8 t[512];
+	uint8_t t[512];
 
 	bn_zero(t, n);
 	t[n-1] = 1;
 	bn_mon_mul(d, d, t, N, n);
 }
 
-static void bn_mon_exp(u8 *d, u8 *a, u8 *N, u32 n, u8 *e, u32 en)
+static void bn_mon_exp(uint8_t *d, uint8_t *a, uint8_t *N, uint32_t n, uint8_t *e, uint32_t en)
 {
-	u8 t[512];
-	u32 i;
-	u8 mask;
+	uint8_t t[512];
+	uint32_t i;
+	uint8_t mask;
 
 	bn_zero(d, n);
 	d[n-1] = 1;
@@ -204,9 +205,9 @@ static void bn_mon_exp(u8 *d, u8 *a, u8 *N, u32 n, u8 *e, u32 en)
 		}
 }
 
-void bn_mon_inv(u8 *d, u8 *a, u8 *N, u32 n)
+void bn_mon_inv(uint8_t *d, uint8_t *a, uint8_t *N, uint32_t n)
 {
-	u8 t[512], s[512];
+	uint8_t t[512], s[512];
 
 	bn_zero(s, n);
 	s[n-1] = 2;
@@ -214,19 +215,19 @@ void bn_mon_inv(u8 *d, u8 *a, u8 *N, u32 n)
 	bn_mon_exp(d, a, N, n, t, n);
 }
 
-static void elt_copy(u8 *d, u8 *a)
+static void elt_copy(uint8_t *d, uint8_t *a)
 {
 	memcpy(d, a, 20);
 }
 
-static void elt_zero(u8 *d)
+static void elt_zero(uint8_t *d)
 {
 	memset(d, 0, 20);
 }
 
-static int elt_is_zero(u8 *d)
+static int elt_is_zero(uint8_t *d)
 {
-	u32 i;
+	uint32_t i;
 
 	for (i = 0; i < 20; i++)
 		if (d[i] != 0)
@@ -235,29 +236,29 @@ static int elt_is_zero(u8 *d)
 	return 1;
 }
 
-static void elt_add(u8 *d, u8 *a, u8 *b)
+static void elt_add(uint8_t *d, uint8_t *a, uint8_t *b)
 {
 	bn_add(d, a, b, ec_p, 20);
 }
 
-static void elt_sub(u8 *d, u8 *a, u8 *b)
+static void elt_sub(uint8_t *d, uint8_t *a, uint8_t *b)
 {
 	bn_sub(d, a, b, ec_p, 20);
 }
 
-static void elt_mul(u8 *d, u8 *a, u8 *b)
+static void elt_mul(uint8_t *d, uint8_t *a, uint8_t *b)
 {
 	bn_mon_mul(d, a, b, ec_p, 20);
 }
 
-static void elt_square(u8 *d, u8 *a)
+static void elt_square(uint8_t *d, uint8_t *a)
 {
 	elt_mul(d, a, a);
 }
 
-static void elt_inv(u8 *d, u8 *a)
+static void elt_inv(uint8_t *d, uint8_t *a)
 {
-	u8 s[20];
+	uint8_t s[20];
 	elt_copy(s, a);
 	bn_mon_inv(d, s, ec_p, 20);
 }
@@ -275,10 +276,10 @@ static void point_from_mon(struct point *p)
 }
 
 #if 0
-static int point_is_on_curve(u8 *p)
+static int point_is_on_curve(uint8_t *p)
 {
-	u8 s[20], t[20];
-	u8 *x, *y;
+	uint8_t s[20], t[20];
+	uint8_t *x, *y;
 
 	x = p;
 	y = p + 20;
@@ -311,9 +312,9 @@ static int point_is_zero(struct point *p)
 
 static void point_double(struct point *r, struct point *p)
 {
-	u8 s[20], t[20];
+	uint8_t s[20], t[20];
 	struct point pp;
-	u8 *px, *py, *rx, *ry;
+	uint8_t *px, *py, *rx, *ry;
 
 	pp = *p;
 
@@ -346,8 +347,8 @@ static void point_double(struct point *r, struct point *p)
 
 static void point_add(struct point *r, struct point *p, struct point *q)
 {
-	u8 s[20], t[20], u[20];
-	u8 *px, *py, *qx, *qy, *rx, *ry;
+	uint8_t s[20], t[20], u[20];
+	uint8_t *px, *py, *qx, *qy, *rx, *ry;
 	struct point pp, qq;
 
 	pp = *p;
@@ -397,10 +398,10 @@ static void point_add(struct point *r, struct point *p, struct point *q)
 	elt_sub(ry, ry, py);	// ry = -s*(rx-px) - py
 }
 
-static void point_mul(struct point *d, u8 *a, struct point *b)	// a is bignum
+static void point_mul(struct point *d, uint8_t *a, struct point *b)	// a is bignum
 {
-	u32 i;
-	u8 mask;
+	uint32_t i;
+	uint8_t mask;
 
 	point_zero(d);
 
@@ -412,20 +413,20 @@ static void point_mul(struct point *d, u8 *a, struct point *b)	// a is bignum
 		}
 }
 
-void get_rand(u8 *dst, u32 len)
+void get_rand(uint8_t *dst, uint32_t len)
 {
-	u32 i;
+	uint32_t i;
 
 	for(i = 0; i < len; i++)
 		dst[i] = rand() & 0xFF;
 }
 
-static void generate_ecdsa(u8 *R, u8 *S, u8 *k, u8 *hash)
+static void generate_ecdsa(uint8_t *R, uint8_t *S, uint8_t *k, uint8_t *hash)
 {
-	u8 e[21];
-	u8 kk[21];
-	u8 m[21];
-	u8 minv[21];
+	uint8_t e[21];
+	uint8_t kk[21];
+	uint8_t m[21];
+	uint8_t minv[21];
 	struct point mG;
 
 	e[0] = 0;
@@ -464,13 +465,13 @@ try_again:
 	bn_from_mon(S, ec_N, 21);
 }
 
-static int check_ecdsa(struct point *Q, u8 *R, u8 *S, u8 *hash)
+static int check_ecdsa(struct point *Q, uint8_t *R, uint8_t *S, uint8_t *hash)
 {
-	u8 Sinv[21];
-	u8 e[21];
-	u8 w1[21], w2[21];
+	uint8_t Sinv[21];
+	uint8_t e[21];
+	uint8_t w1[21], w2[21];
 	struct point r1, r2;
-	u8 rr[21];
+	uint8_t rr[21];
 
 	e[0] = 0;
 	memcpy(e + 1, hash, 20);
@@ -506,14 +507,14 @@ static int check_ecdsa(struct point *Q, u8 *R, u8 *S, u8 *hash)
 }
 
 #if 0
-static void ec_priv_to_pub(u8 *k, u8 *Q)
+static void ec_priv_to_pub(uint8_t *k, uint8_t *Q)
 {
 	point_mul(Q, k, ec_G);
 }
 #endif
 
-int set_vsh_curve(u8 *p, u8 *a, u8 *b, u8 *N, u8 *Gx, u8 *Gy)
-{	
+int set_vsh_curve(uint8_t *p, uint8_t *a, uint8_t *b, uint8_t *N, uint8_t *Gx, uint8_t *Gy)
+{
 	memcpy(p, p_fixed, 20);
 	memcpy(a, a_fixed, 20);
 	memcpy(b, b_fixed, 20);
@@ -524,7 +525,7 @@ int set_vsh_curve(u8 *p, u8 *a, u8 *b, u8 *N, u8 *Gx, u8 *Gy)
 	return 0;
 }
 
-int ecdsa_set_curve(u32 type)
+int ecdsa_set_curve(uint32_t type)
 {
 //	if (ecdsa_get_params(type, ec_p, ec_a, ec_b, ec_N, ec_G.x, ec_G.y) < 0)
 	if (type != 0)
@@ -540,24 +541,24 @@ int ecdsa_set_curve(u32 type)
 	return 0;
 }
 
-void ecdsa_set_pub(u8 *Q)
+void ecdsa_set_pub(uint8_t *Q)
 {
 	memcpy(ec_Q.x, Q, 20);
 	memcpy(ec_Q.y, Q+20, 20);
 	point_to_mon(&ec_Q);
 }
 
-void ecdsa_set_priv(u8 *k)
+void ecdsa_set_priv(uint8_t *k)
 {
 	memcpy(ec_k, k, sizeof ec_k);
 }
 
-int ecdsa_verify(u8 *hash, u8 *R, u8 *S)
+int ecdsa_verify(uint8_t *hash, uint8_t *R, uint8_t *S)
 {
 	return check_ecdsa(&ec_Q, R, S, hash);
 }
 
-void ecdsa_sign(u8 *hash, u8 *R, u8 *S)
+void ecdsa_sign(uint8_t *hash, uint8_t *R, uint8_t *S)
 {
 	generate_ecdsa(R, S, ec_k, hash);
 }
