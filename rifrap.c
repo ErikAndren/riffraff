@@ -12,47 +12,51 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <polarssl/aes.h>
-#include <polarssl/sha1.h>
+/* #include <polarssl/aes.h> */
+/* #include <polarssl/sha1.h> */
 
-#include "util.h"
+#include <mbedtls/aes.h>
+#include <mbedtls/sha1.h>
+
+
+//#include "util.h"
 #include "ecdsa.h"
 
-const u8 rap_initial_key[16] = {
-    0x86, 0x9F, 0x77, 0x45, 0xC1, 0x3F, 0xD8, 0x90, 
+const uint8_t rap_initial_key[16] = {
+    0x86, 0x9F, 0x77, 0x45, 0xC1, 0x3F, 0xD8, 0x90,
     0xCC, 0xF2, 0x91, 0x88, 0xE3, 0xCC, 0x3E, 0xDF
 };
-const u8 pbox[16] = {
-    0x0C, 0x03, 0x06, 0x04, 0x01, 0x0B, 0x0F, 0x08, 
+const uint8_t pbox[16] = {
+    0x0C, 0x03, 0x06, 0x04, 0x01, 0x0B, 0x0F, 0x08,
     0x02, 0x07, 0x00, 0x05, 0x0A, 0x0E, 0x0D, 0x09
 };
-const u8 e1[16] = {
-    0xA9, 0x3E, 0x1F, 0xD6, 0x7C, 0x55, 0xA3, 0x29, 
+const uint8_t e1[16] = {
+    0xA9, 0x3E, 0x1F, 0xD6, 0x7C, 0x55, 0xA3, 0x29,
     0xB7, 0x5F, 0xDD, 0xA6, 0x2A, 0x95, 0xC7, 0xA5
 };
-const u8 e2[16] = {
-    0x67, 0xD4, 0x5D, 0xA3, 0x29, 0x6D, 0x00, 0x6A, 
+const uint8_t e2[16] = {
+    0x67, 0xD4, 0x5D, 0xA3, 0x29, 0x6D, 0x00, 0x6A,
     0x4E, 0x7C, 0x53, 0x7B, 0xF5, 0x53, 0x8C, 0x74
 };
 
 // npdrm_const /klicenseeConst
-const u8 npdrm_const_key[16] = {
-    0x5E, 0x06, 0xE0, 0x4F, 0xD9, 0x4A, 0x71, 0xBF, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 
+const uint8_t npdrm_const_key[16] = {
+    0x5E, 0x06, 0xE0, 0x4F, 0xD9, 0x4A, 0x71, 0xBF,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
 };
 
 // NP_rif_key /actdatIndexDecKey
-const u8 npdrm_rif_key[16] = {
-    0xDA, 0x7D, 0x4B, 0x5E, 0x49, 0x9A, 0x4F, 0x53, 
-    0xB1, 0xC1, 0xA1, 0x4A, 0x74, 0x84, 0x44, 0x3B 
+const uint8_t npdrm_rif_key[16] = {
+    0xDA, 0x7D, 0x4B, 0x5E, 0x49, 0x9A, 0x4F, 0x53,
+    0xB1, 0xC1, 0xA1, 0x4A, 0x74, 0x84, 0x44, 0x3B
 };
 
-u8 ec_k_nm[21] = {
-	0x00, 0xbf, 0x21, 0x22, 0x4b, 0x04, 0x1f, 0x29, 0x54, 0x9d, 
+uint8_t ec_k_nm[21] = {
+	0x00, 0xbf, 0x21, 0x22, 0x4b, 0x04, 0x1f, 0x29, 0x54, 0x9d,
 	0xb2, 0x5e, 0x9a, 0xad, 0xe1, 0x9e, 0x72, 0x0a, 0x1f, 0xe0, 0xf1
 };
 
-u8 ec_Q_nm[40] = {
+uint8_t ec_Q_nm[40] = {
 	0x94, 0x8D, 0xA1, 0x3E, 0x8C, 0xAF, 0xD5, 0xBA, 0x0E, 0x90,
 	0xCE, 0x43, 0x44, 0x61, 0xBB, 0x32, 0x7F, 0xE7, 0xE0, 0x80,
 	0x47, 0x5E, 0xAA, 0x0A, 0xD3, 0xAD, 0x4F, 0x5B, 0x62, 0x47,
@@ -62,50 +66,50 @@ u8 ec_Q_nm[40] = {
 
 struct rif
 {
-    u32 version;
-    u32 licenseType;
-    u64 accountid;
+    uint32_t version;
+    uint32_t licenseType;
+    uint64_t accountid;
     char titleid[0x30]; //Content ID
-    u8 padding[0xC]; //Padding for randomness
-    u32 actDatIndex; //Key index on act.dat between 0x00 and 0x7F
-    u8 key[0x10]; //encrypted klicensee
-    u64 timestamp; //timestamp??
-    u64 expiration; //Always 0
-    u8 r[0x14];
-    u8 s[0x14];
+    uint8_t padding[0xC]; //Padding for randomness
+    uint32_t actDatIndex; //Key index on act.dat between 0x00 and 0x7F
+    uint8_t key[0x10]; //encrypted klicensee
+    uint64_t timestamp; //timestamp??
+    uint64_t expiration; //Always 0
+    uint8_t r[0x14];
+    uint8_t s[0x14];
 } __attribute__ ((packed));
 
 struct actdat
 {
-    u32 version;
-    u32 licenseType;
-    u64 accountId;
-    u8 keyTable[0x800]; //Key Table
-    u8 unk2[0x800];
-    u8 signature[0x28];
+    uint32_t version;
+    uint32_t licenseType;
+    uint64_t accountId;
+    uint8_t keyTable[0x800]; //Key Table
+    uint8_t unk2[0x800];
+    uint8_t signature[0x28];
 } __attribute__ ((packed));
 
 
-void aesecb128_encrypt(const u8 *key, const u8 *in, u8 *out)
+void aesecb128_encrypt(const uint8_t *key, const uint8_t *in, uint8_t *out)
 {
 	aes_context ctx;
 	aes_setkey_enc(&ctx, key, 128);
 	aes_crypt_ecb(&ctx, AES_ENCRYPT, in, out);
 }
 
-void aesecb128_decrypt(const u8 *key, const u8 *in, u8 *out)
+void aesecb128_decrypt(const uint8_t *key, const uint8_t *in, uint8_t *out)
 {
 	aes_context ctx;
 	aes_setkey_dec(&ctx, key, 128);
 	aes_crypt_ecb(&ctx, AES_DECRYPT, in, out);
 }
 
-int klicensee_to_rap(u8 *klicensee, u8 *rap_key)
+int klicensee_to_rap(uint8_t *klicensee, uint8_t *rap_key)
 {
 	int round_num;
 	int i;
 
-	u8 key[16];
+	uint8_t key[16];
 	memset(key, 0, sizeof(key));
 	memcpy(key, klicensee, sizeof(key));
 
@@ -113,9 +117,9 @@ int klicensee_to_rap(u8 *klicensee, u8 *rap_key)
 		int o = 0;
 		for (i = 0; i < 16; ++i) {
 			int p = pbox[i];
-			u8 ec2 = e2[p];
-			u8 kc = key[p] + ec2;
-			key[p] = kc + (u8)o;
+			uint8_t ec2 = e2[p];
+			uint8_t kc = key[p] + ec2;
+			key[p] = kc + (uint8_t)o;
 			if (o != 1 || kc != 0xFF) {
 				o = kc < ec2 ? 1 : 0;
 			}
@@ -133,12 +137,12 @@ int klicensee_to_rap(u8 *klicensee, u8 *rap_key)
 	return 0;
 }
 
-int rap_to_klicensee(u8 *rap_key, u8 *klicensee)
+int rap_to_klicensee(uint8_t *rap_key, uint8_t *klicensee)
 {
 	int round_num;
 	int i;
 
-	u8 key[16];
+	uint8_t key[16];
 	aesecb128_decrypt(rap_initial_key, rap_key, key);
 
 	for (round_num = 0; round_num < 5; ++round_num) {
@@ -154,8 +158,8 @@ int rap_to_klicensee(u8 *rap_key, u8 *klicensee)
 		int o = 0;
 		for (i = 0; i < 16; ++i) {
 			int p = pbox[i];
-			u8 kc = key[p] - o;
-			u8 ec2 = e2[p];
+			uint8_t kc = key[p] - o;
+			uint8_t ec2 = e2[p];
 			if (o != 1 || kc != 0xFF) {
 				o = kc < ec2 ? 1 : 0;
 				key[p] = kc - ec2;
@@ -182,7 +186,7 @@ struct actdat *actdat_get(const char* base) {
     snprintf(path, sizeof(path), "%s" "act.dat", base);
 
     LOG("Loading '%s'...", path);
-    if (read_file(path, (u8*) actdat, sizeof(struct actdat)) < 0)
+    if (read_file(path, (uint8_t*) actdat, sizeof(struct actdat)) < 0)
         goto fail;
 
     return actdat;
@@ -192,10 +196,10 @@ fail:
 		free(actdat);
 	}
 
-	return NULL; 
+	return NULL;
 }
 
-int rap2rif(const u8* idps_key, const char* exdata_path, const char* rap_file, const char *rif_path)
+int rap2rif(const uint8_t* idps_key, const char* exdata_path, const char* rap_file, const char *rif_path)
 {
 	struct actdat *actdat = NULL;
 	struct rif rif;
@@ -282,7 +286,7 @@ fail:
 	return 0;
 }
 
-int rif2klicensee(const u8* idps_key, const char* exdata_path, const char* rif_file, u8* rifKey)
+int rif2klicensee(const uint8_t* idps_key, const char* exdata_path, const char* rif_file, uint8_t* rifKey)
 {
 	struct rif rif;
 	struct actdat *actdat = NULL;
@@ -294,7 +298,7 @@ int rif2klicensee(const u8* idps_key, const char* exdata_path, const char* rif_f
     snprintf(path, sizeof(path), "%s%s", exdata_path, rif_file);
 
     LOG("Loading RIF '%s'...", path);
-    if (read_file(path, (u8*) &rif, sizeof(struct rif)) < 0) {
+    if (read_file(path, (uint8_t*) &rif, sizeof(struct rif)) < 0) {
         LOG("Error: unable to load rif file '%s'", path);
         goto fail;
     }
@@ -317,12 +321,12 @@ int rif2klicensee(const u8* idps_key, const char* exdata_path, const char* rif_f
 fail:
 	if (actdat != NULL) {
 		free(actdat);
-	} 
+	}
 
 	return 0;
 }
 
-int rif2rap(const u8* idps_key, const char* exdata_path, const char* rif_file, const char* rap_path)
+int rif2rap(const uint8_t* idps_key, const char* exdata_path, const char* rif_file, const char* rap_path)
 {
     uint8_t rifKey[0x10];
     uint8_t rap[0x10];
