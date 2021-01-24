@@ -92,16 +92,16 @@ struct actdat
 
 void aesecb128_encrypt(const uint8_t *key, const uint8_t *in, uint8_t *out)
 {
-	aes_context ctx;
-	aes_setkey_enc(&ctx, key, 128);
-	aes_crypt_ecb(&ctx, AES_ENCRYPT, in, out);
+	mbedtls_aes_context ctx;
+	mbedtls_aes_setkey_enc(&ctx, key, 128);
+	mbedtls_aes_crypt_ecb(&ctx, MBEDTLS_AES_ENCRYPT, in, out);
 }
 
 void aesecb128_decrypt(const uint8_t *key, const uint8_t *in, uint8_t *out)
 {
-	aes_context ctx;
-	aes_setkey_dec(&ctx, key, 128);
-	aes_crypt_ecb(&ctx, AES_DECRYPT, in, out);
+	mbedtls_aes_context ctx;
+	mbedtls_aes_setkey_dec(&ctx, key, 128);
+	mbedtls_aes_crypt_ecb(&ctx, MBEDTLS_AES_DECRYPT, in, out);
 }
 
 int klicensee_to_rap(uint8_t *klicensee, uint8_t *rap_key)
@@ -185,7 +185,7 @@ struct actdat *actdat_get(const char* base) {
 
     snprintf(path, sizeof(path), "%s" "act.dat", base);
 
-    LOG("Loading '%s'...", path);
+//    LOG("Loading '%s'...", path);
     if (read_file(path, (uint8_t*) actdat, sizeof(struct actdat)) < 0)
         goto fail;
 
@@ -217,15 +217,15 @@ int rap2rif(const uint8_t* idps_key, const char* exdata_path, const char* rap_fi
 
 	actdat = actdat_get(rif_path);
 	if (actdat == NULL) {
-		LOG("Error: unable to load act.dat");
+//		LOG("Error: unable to load act.dat");
 		goto fail;
 	}
 
 	snprintf(path, sizeof(path), "%s%s", exdata_path, rap_file);
 
-	LOG("Loading RAP '%s'...", path);
+//	LOG("Loading RAP '%s'...", path);
 	if (read_file(path, rap_key, sizeof(rap_key)) < 0) {
-		LOG("Error: unable to load rap file");
+//		LOG("Error: unable to load rap file");
 		goto fail;
 	}
 
@@ -243,7 +243,7 @@ int rap2rif(const uint8_t* idps_key, const char* exdata_path, const char* rap_fi
 		++p1;
 	p2 = strrchr(rap_file, '.');
 	if (p1 == NULL || p2 == NULL || *(p1 + 1) == '\0' || p2 < p1) {
-		LOG("Error: unable to get content ID");
+//		LOG("Error: unable to get content ID");
 		goto fail;
 	}
 	strncpy(rif.titleid, p1, p2 - p1);
@@ -269,7 +269,7 @@ int rap2rif(const uint8_t* idps_key, const char* exdata_path, const char* rap_fi
     snprintf(path, sizeof(path), "%s%s", rif_path, p1);
     strcpy(strrchr(path, '.'), ".rif");
 
-	LOG("Saving rif to '%s'...", path);
+//	LOG("Saving rif to '%s'...", path);
 	if (write_file(path, (uint8_t*) &rif, sizeof(struct rif)) < 0) {
 		LOG("Error: unable to create rif file");
 		goto fail;
@@ -297,9 +297,9 @@ int rif2klicensee(const uint8_t* idps_key, const char* exdata_path, const char* 
 
     snprintf(path, sizeof(path), "%s%s", exdata_path, rif_file);
 
-    LOG("Loading RIF '%s'...", path);
+//    LOG("Loading RIF '%s'...", path);
     if (read_file(path, (uint8_t*) &rif, sizeof(struct rif)) < 0) {
-        LOG("Error: unable to load rif file '%s'", path);
+//        LOG("Error: unable to load rif file '%s'", path);
         goto fail;
     }
 
@@ -307,7 +307,7 @@ int rif2klicensee(const uint8_t* idps_key, const char* exdata_path, const char* 
 
     actdat = actdat_get(exdata_path);
 	if (actdat == NULL) {
-		LOG("Error: unable to load act.dat");
+//		LOG("Error: unable to load act.dat");
 		goto fail;
 	}
 
@@ -340,9 +340,9 @@ int rif2rap(const uint8_t* idps_key, const char* exdata_path, const char* rif_fi
     snprintf(path, sizeof(path), "%s%s", rap_path, rif_file);
     strcpy(strrchr(path, '.'), ".rap");
 
-	LOG("Saving RAP to '%s'...", path);
+//	LOG("Saving RAP to '%s'...", path);
 	if (write_file(path, rap, sizeof(rap)) < 0) {
-		LOG("Error: unable to create rap file");
+//		LOG("Error: unable to create rap file");z
 		return 0;
 	}
 
