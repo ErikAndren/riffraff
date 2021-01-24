@@ -347,7 +347,3 @@ int rif2rap(const uint8_t* idps_key, const char* exdata_path, const char* rif_fi
 
 	return 1;
 }
-
-int main() {
-	printf("Dummy!\n");
-}
