@@ -18,8 +18,7 @@
 #include <mbedtls/aes.h>
 #include <mbedtls/sha1.h>
 
-
-//#include "util.h"
+#include "util.h"
 #include "ecdsa.h"
 
 const uint8_t rap_initial_key[16] = {
@@ -257,7 +256,7 @@ int rap2rif(const uint8_t* idps_key, const char* exdata_path, const char* rap_fi
 	aesecb128_encrypt(act_dat_key, rif.key, rif.key);
 	aesecb128_encrypt(npdrm_rif_key, rif.padding, rif.padding);
 
-	sha1((uint8_t*) &rif, 0x70, sha1_digest);
+	mbedtls_sha1((uint8_t*) &rif, 0x70, sha1_digest);
 	ecdsa_set_curve(0);
 	ecdsa_set_pub(ec_Q_nm);
 	ecdsa_set_priv(ec_k_nm);
