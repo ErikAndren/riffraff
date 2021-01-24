@@ -5,26 +5,26 @@
 
 #define ALIGN(_value, _alignment) (((_value) + (_alignment) - 1) & ~((_alignment) - 1))
 
-u64 x_to_u64(const char *hex);
-u8 * x_to_u8_buffer(const char *hex);
+uint64_t x_to_uint64_t(const char *hex);
+uint8_t * x_to_uint8_t_buffer(const char *hex);
 
-void dump_data(const u8 *data, u64 size, FILE *fp);
+void dump_data(const uint8_t *data, uint64_t size, FILE *fp);
 
-int get_file_size(const char *file_path, u64 *size);
-int read_file(const char *file_path, u8 *data, u64 size);
-int write_file(const char *file_path, u8 *data, u64 size);
-int mmap_file(const char *file_path, u8 **data, u64 *size);
-int unmmap_file(u8 *data, u64 size);
+int get_file_size(const char *file_path, uint64_t *size);
+int read_file(const char *file_path, uint8_t *data, uint64_t size);
+int write_file(const char *file_path, uint8_t *data, uint64_t size);
+int mmap_file(const char *file_path, uint8_t **data, uint64_t *size);
+int unmmap_file(uint8_t *data, uint64_t size);
 
-int calculate_hmac_hash(const u8 *data, u64 size, const u8 *key, u32 key_length, u8 output[20]);
-int calculate_file_hmac_hash(const char *file_path, const u8 *key, u32 key_length, u8 output[20]);
+int calculate_hmac_hash(const uint8_t *data, uint64_t size, const uint8_t *key, uint32_t key_length, uint8_t output[20]);
+int calculate_file_hmac_hash(const char *file_path, const uint8_t *key, uint32_t key_length, uint8_t output[20]);
 
 int wildcard_match(const char *data, const char *mask);
 int wildcard_match_icase(const char *data, const char *mask);
 
-u64 align_to_pow2(u64 offset, u64 alignment);
+uint64_t align_to_pow2(uint64_t offset, uint64_t alignment);
 
-int read_buffer(const char *file_path, u8 **buf, size_t *size);
-int write_buffer(const char *file_path, u8 *buf, size_t size);
+int read_buffer(const char *file_path, uint8_t **buf, size_t *size);
+int write_buffer(const char *file_path, uint8_t *buf, size_t size);
 
 #endif /* !_UTIL_H_ */

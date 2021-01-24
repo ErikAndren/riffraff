@@ -1,12 +1,12 @@
 #include "util.h"
 #include "types.h"
 
-#include <polarssl/sha1.h>
+#include <mbedtls/sha1.h>
 
-u64 x_to_u64(const char *hex) {
-	u64 result, t;
-	u32 len;
-	s32 c;
+uint64_t x_to_uint64_t(const char *hex) {
+	uint64_t result, t;
+	uint32_t len;
+	int32_t c;
 
 	result = 0;
 	t = 0;
@@ -28,37 +28,37 @@ u64 x_to_u64(const char *hex) {
 	return result;
 }
 
-u8 * x_to_u8_buffer(const char *hex) {
+uint8_t * x_to_uint8_t_buffer(const char *hex) {
 	char tmp[3] = { 0, 0, 0 };
-	u8 *result;
-	u8 *ptr;
-	u32 len;
+	uint8_t *result;
+	uint8_t *ptr;
+	uint32_t len;
 
 	len = strlen(hex);
 	if (len % 2 != 0)
 		return NULL;
 
-	result = (u8 *)malloc(len);
+	result = (uint8_t *)malloc(len);
 	memset(result, 0, len);
 	ptr = result;
 
 	while (len--) {
 		tmp[0] = *hex++;
 		tmp[1] = *hex++;
-		*ptr++ = (u8)x_to_u64(tmp);
+		*ptr++ = (uint8_t)x_to_uint64_t(tmp);
 	}
 
 	return result;
 }
 
-void dump_data(const u8 *data, u64 size, FILE *fp) {
-	u64 i;
+void dump_data(const uint8_t *data, uint64_t size, FILE *fp) {
+	uint64_t i;
 	for (i = 0; i < size; i++)
 		printf("%02X", data[i]);
 	printf("\n");
 }
 
-int get_file_size(const char *file_path, u64 *size) {
+int get_file_size(const char *file_path, uint64_t *size) {
 	struct stat stat_buf;
 
 	if (!file_path || !size)
@@ -72,7 +72,7 @@ int get_file_size(const char *file_path, u64 *size) {
 	return 0;
 }
 
-int read_file(const char *file_path, u8 *data, u64 size) {
+int read_file(const char *file_path, uint8_t *data, uint64_t size) {
 	FILE *fp;
 	struct stat stat_buf;
 
@@ -105,7 +105,7 @@ int read_file(const char *file_path, u8 *data, u64 size) {
 	return 0;
 }
 
-int write_file(const char *file_path, u8 *data, u64 size) {
+int write_file(const char *file_path, uint8_t *data, uint64_t size) {
 	FILE *fp;
 
 	if (!file_path || !data)
@@ -125,7 +125,7 @@ int write_file(const char *file_path, u8 *data, u64 size) {
 	return 0;
 }
 
-int mmap_file(const char *file_path, u8 **data, u64 *size) {
+int mmap_file(const char *file_path, uint8_t **data, uint64_t *size) {
 	int fd;
 	struct stat stat_buf;
 	void *ptr;
@@ -152,13 +152,13 @@ int mmap_file(const char *file_path, u8 **data, u64 *size) {
 
 	read_file(file_path, ptr, stat_buf.st_size);
 
-	*data = (u8 *)ptr;
+	*data = (uint8_t *)ptr;
 	*size = stat_buf.st_size;
 
 	return 0;
 }
 
-int unmmap_file(u8 *data, u64 size) {
+int unmmap_file(uint8_t *data, uint64_t size) {
 	if (!data || !size)
 		return -1;
 
@@ -169,58 +169,58 @@ int unmmap_file(u8 *data, u64 size) {
 	return 0;
 }
 
-int calculate_hmac_hash(const u8 *data, u64 size, const u8 *key, u32 key_length, u8 output[20]) {
-	sha1_context sha1;
+/* int calculate_hmac_hash(const uint8_t *data, uint64_t size, const uint8_t *key, uint32_t key_length, uint8_t output[20]) { */
+/* 	mbedtls_sha1_context sha1; */
 
-	if (!key_length || !output)
-		return -1;
+/* 	if (!key_length || !output) */
+/* 		return -1; */
 
-	memset(&sha1, 0, sizeof(sha1_context));
+/* 	memset(&sha1, 0, sizeof(sha1_context)); */
 
-	sha1_hmac_starts(&sha1, key, key_length);
-	sha1_hmac_update(&sha1, data, size);
-	sha1_hmac_finish(&sha1, output);
+/* 	sha1_hmac_starts(&sha1, key, key_length); */
+/* 	sha1_hmac_update(&sha1, data, size); */
+/* 	sha1_hmac_finish(&sha1, output); */
 
-	memset(&sha1, 0, sizeof(sha1_context));
+/* 	memset(&sha1, 0, sizeof(sha1_context)); */
 
-	return 0;
-}
+/* 	return 0; */
+/* } */
 
-int calculate_file_hmac_hash(const char *file_path, const u8 *key, u32 key_length, u8 output[20]) {
-	FILE *fp;
-	u8 buf[512];
-	sha1_context sha1;
-	size_t n;
+/* int calculate_file_hmac_hash(const char *file_path, const uint8_t *key, uint32_t key_length, uint8_t output[20]) { */
+/* 	FILE *fp; */
+/* 	uint8_t buf[512]; */
+/* 	sha1_context sha1; */
+/* 	size_t n; */
 
-	if ((fp = fopen(file_path, "rb")) == NULL)
-		return -1;
+/* 	if ((fp = fopen(file_path, "rb")) == NULL) */
+/* 		return -1; */
 
-	memset(&sha1, 0, sizeof(sha1_context));
+/* 	memset(&sha1, 0, sizeof(sha1_context)); */
 
-	sha1_hmac_starts(&sha1, key, key_length);
-	while ((n = fread(buf, 1, sizeof(buf), fp)) > 0)
-		sha1_hmac_update(&sha1, buf, n);
-	sha1_hmac_finish(&sha1, output);
+/* 	sha1_hmac_starts(&sha1, key, key_length); */
+/* 	while ((n = fread(buf, 1, sizeof(buf), fp)) > 0) */
+/* 		sha1_hmac_update(&sha1, buf, n); */
+/* 	sha1_hmac_finish(&sha1, output); */
 
-	memset(&sha1, 0, sizeof(sha1_context));
+/* 	memset(&sha1, 0, sizeof(sha1_context)); */
 
-	if (ferror(fp) != 0) {
-		fclose(fp);
-		return -1;
-	}
+/* 	if (ferror(fp) != 0) { */
+/* 		fclose(fp); */
+/* 		return -1; */
+/* 	} */
 
-	fclose(fp);
+/* 	fclose(fp); */
 
-	return 0;
-}
+/* 	return 0; */
+/* } */
 
-u64 align_to_pow2(u64 offset, u64 alignment) {
+uint64_t align_to_pow2(uint64_t offset, uint64_t alignment) {
 	return (offset + alignment - 1) & ~(alignment - 1);
 }
 
-int read_buffer(const char *file_path, u8 **buf, size_t *size) {
+int read_buffer(const char *file_path, uint8_t **buf, size_t *size) {
         FILE *fp;
-        u8 *file_buf;
+        uint8_t *file_buf;
         size_t file_size;
 
         if ((fp = fopen(file_path, "rb")) == NULL)
@@ -228,7 +228,7 @@ int read_buffer(const char *file_path, u8 **buf, size_t *size) {
         fseek(fp, 0, SEEK_END);
         file_size = ftell(fp);
         fseek(fp, 0, SEEK_SET);
-        file_buf = (u8 *)malloc(file_size);
+        file_buf = (uint8_t *)malloc(file_size);
         fread(file_buf, 1, file_size, fp);
         fclose(fp);
 
@@ -242,7 +242,7 @@ int read_buffer(const char *file_path, u8 **buf, size_t *size) {
         return 0;
 }
 
-int write_buffer(const char *file_path, u8 *buf, size_t size) {
+int write_buffer(const char *file_path, uint8_t *buf, size_t size) {
         FILE *fp;
 
         if ((fp = fopen(file_path, "wb")) == NULL)
