@@ -12,8 +12,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-/* #include <polarssl/aes.h> */
-/* #include <polarssl/sha1.h> */
 
 #include <mbedtls/aes.h>
 #include <mbedtls/sha1.h>
