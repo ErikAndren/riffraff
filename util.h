@@ -16,9 +16,6 @@ int write_file(const char *file_path, uint8_t *data, uint64_t size);
 int mmap_file(const char *file_path, uint8_t **data, uint64_t *size);
 int unmmap_file(uint8_t *data, uint64_t size);
 
-int calculate_hmac_hash(const uint8_t *data, uint64_t size, const uint8_t *key, uint32_t key_length, uint8_t output[20]);
-int calculate_file_hmac_hash(const char *file_path, const uint8_t *key, uint32_t key_length, uint8_t output[20]);
-
 int wildcard_match(const char *data, const char *mask);
 int wildcard_match_icase(const char *data, const char *mask);
 
