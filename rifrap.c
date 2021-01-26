@@ -16,6 +16,8 @@
 #include <mbedtls/aes.h>
 #include <mbedtls/sha1.h>
 
+#include <arpa/inet.h>
+
 #include "util.h"
 #include "ecdsa.h"
 
@@ -182,7 +184,7 @@ struct actdat *actdat_get(const char* base) {
 
     snprintf(path, sizeof(path), "%s" "act.dat", base);
 
-    LOG("Loading '%s'...", path);
+    printf("Loading '%s'...\n", path);
     if (read_file(path, (uint8_t*) actdat, sizeof(struct actdat)) < 0)
         goto fail;
 
@@ -214,15 +216,15 @@ int rap2rif(const uint8_t* idps_key, const char* exdata_path, const char* rap_fi
 
 	actdat = actdat_get(rif_path);
 	if (actdat == NULL) {
-		LOG("Error: unable to load act.dat");
+		printf("Error: unable to load act.dat\n");
 		goto fail;
 	}
 
 	snprintf(path, sizeof(path), "%s%s", exdata_path, rap_file);
 
-	LOG("Loading RAP '%s'...", path);
+	printf("Loading RAP '%s'...\n", path);
 	if (read_file(path, rap_key, sizeof(rap_key)) < 0) {
-		LOG("Error: unable to load rap file");
+		printf("Error: unable to load rap file\n");
 		goto fail;
 	}
 
@@ -240,7 +242,7 @@ int rap2rif(const uint8_t* idps_key, const char* exdata_path, const char* rap_fi
 		++p1;
 	p2 = strrchr(rap_file, '.');
 	if (p1 == NULL || p2 == NULL || *(p1 + 1) == '\0' || p2 < p1) {
-		LOG("Error: unable to get content ID");
+		printf("Error: unable to get content ID\n");
 		goto fail;
 	}
 	strncpy(rif.titleid, p1, p2 - p1);
@@ -266,9 +268,9 @@ int rap2rif(const uint8_t* idps_key, const char* exdata_path, const char* rap_fi
     snprintf(path, sizeof(path), "%s%s", rif_path, p1);
     strcpy(strrchr(path, '.'), ".rif");
 
-	LOG("Saving rif to '%s'...", path);
+	printf("Saving rif to '%s'...\n", path);
 	if (write_file(path, (uint8_t*) &rif, sizeof(struct rif)) < 0) {
-LOG("Error: unable to create rif file");
+		printf("Error: unable to create rif file\n");
 		goto fail;
 	}
 
@@ -285,7 +287,7 @@ fail:
 
 int rif2klicensee(const uint8_t* idps_key, const char* exdata_path, const char* rif_file, uint8_t* rifKey)
 {
-	struct rif rif;
+	struct rif rif, rif2;
 	struct actdat *actdat = NULL;
 
     uint8_t encryptedConst[0x10];
@@ -294,25 +296,38 @@ int rif2klicensee(const uint8_t* idps_key, const char* exdata_path, const char* 
 
     snprintf(path, sizeof(path), "%s%s", exdata_path, rif_file);
 
-    LOG("Loading RIF '%s'...", path);
+    printf("Loading RIF '%s'...\n", path);
     if (read_file(path, (uint8_t*) &rif, sizeof(struct rif)) < 0) {
-        LOG("Error: unable to load rif file '%s'", path);
+        printf("Error: unable to load rif file '%s'\n", path);
         goto fail;
     }
 
-    aesecb128_decrypt(npdrm_rif_key, rif.padding, rif.padding);
+    if (read_file(path, (uint8_t*) &rif2, sizeof(struct rif)) < 0) {
+        printf("Error: unable to load rif file '%s'\n", path);
+        goto fail;
+    }
+
+    aesecb128_decrypt(npdrm_rif_key, rif.padding, rif2.padding);
 
     actdat = actdat_get(exdata_path);
 	if (actdat == NULL) {
-		LOG("Error: unable to load act.dat");
+		printf("Error: unable to load act.dat\n");
 		goto fail;
 	}
 
     aesecb128_encrypt(idps_key, npdrm_const_key, encryptedConst);
-    aesecb128_decrypt(encryptedConst, &actdat->keyTable[rif.actDatIndex * 0x10], decryptedConst);
-    aesecb128_decrypt(decryptedConst, rif.key, rifKey);
+
+	if (htonl(rif2.actDatIndex) * 0x10 >= 0x800) {
+		printf("actDatIndex is out of bounds: %d\n", htonl(rif2.actDatIndex * 0x10));
+		goto fail;
+	}
+
+    aesecb128_decrypt(encryptedConst, &actdat->keyTable[htonl(rif2.actDatIndex) * 0x10], decryptedConst);
+
+    aesecb128_decrypt(decryptedConst, rif2.key, rifKey);
 
     free(actdat);
+
 	return 1;
 
 fail:
@@ -329,17 +344,18 @@ int rif2rap(const uint8_t* idps_key, const char* exdata_path, const char* rif_fi
     uint8_t rap[0x10];
     char path[256];
 
-    if (!rif2klicensee(idps_key, exdata_path, rif_file, rifKey))
-        return 0;
+    if (rif2klicensee(idps_key, exdata_path, rif_file, rifKey) != 1) {
+        return -1;
+	}
 
     klicensee_to_rap(rifKey, rap);
 
     snprintf(path, sizeof(path), "%s%s", rap_path, rif_file);
     strcpy(strrchr(path, '.'), ".rap");
 
-	LOG("Saving RAP to '%s'...", path);
+	printf("Saving RAP to '%s'...\n", path);
 	if (write_file(path, rap, sizeof(rap)) < 0) {
-		LOG("Error: unable to create rap file");
+		printf("Error: unable to create rap file\n");
 		return 0;
 	}
 
