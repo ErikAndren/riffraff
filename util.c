@@ -163,56 +163,9 @@ int unmmap_file(uint8_t *data, uint64_t size) {
 		return -1;
 
 	free(data);
-//	if (munmap(data, size) < 0)
-//		return -1;
 
 	return 0;
 }
-
-/* int calculate_hmac_hash(const uint8_t *data, uint64_t size, const uint8_t *key, uint32_t key_length, uint8_t output[20]) { */
-/* 	mbedtls_sha1_context sha1; */
-
-/* 	if (!key_length || !output) */
-/* 		return -1; */
-
-/* 	memset(&sha1, 0, sizeof(sha1_context)); */
-
-/* 	sha1_hmac_starts(&sha1, key, key_length); */
-/* 	sha1_hmac_update(&sha1, data, size); */
-/* 	sha1_hmac_finish(&sha1, output); */
-
-/* 	memset(&sha1, 0, sizeof(sha1_context)); */
-
-/* 	return 0; */
-/* } */
-
-/* int calculate_file_hmac_hash(const char *file_path, const uint8_t *key, uint32_t key_length, uint8_t output[20]) { */
-/* 	FILE *fp; */
-/* 	uint8_t buf[512]; */
-/* 	sha1_context sha1; */
-/* 	size_t n; */
-
-/* 	if ((fp = fopen(file_path, "rb")) == NULL) */
-/* 		return -1; */
-
-/* 	memset(&sha1, 0, sizeof(sha1_context)); */
-
-/* 	sha1_hmac_starts(&sha1, key, key_length); */
-/* 	while ((n = fread(buf, 1, sizeof(buf), fp)) > 0) */
-/* 		sha1_hmac_update(&sha1, buf, n); */
-/* 	sha1_hmac_finish(&sha1, output); */
-
-/* 	memset(&sha1, 0, sizeof(sha1_context)); */
-
-/* 	if (ferror(fp) != 0) { */
-/* 		fclose(fp); */
-/* 		return -1; */
-/* 	} */
-
-/* 	fclose(fp); */
-
-/* 	return 0; */
-/* } */
 
 uint64_t align_to_pow2(uint64_t offset, uint64_t alignment) {
 	return (offset + alignment - 1) & ~(alignment - 1);
