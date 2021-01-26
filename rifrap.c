@@ -62,7 +62,6 @@ uint8_t ec_Q_nm[40] = {
 	0xA7, 0xFD, 0xA8, 0x6D, 0xF6, 0x97, 0x90, 0x19, 0x67, 0x73
 };
 
-
 struct rif
 {
     uint32_t version;
@@ -71,8 +70,8 @@ struct rif
     char titleid[0x30]; //Content ID
     uint8_t padding[0xC]; //Padding for randomness
     uint32_t actDatIndex; //Key index on act.dat between 0x00 and 0x7F
-    uint8_t key[0x10]; //encrypted klicensee
-    uint64_t timestamp; //timestamp??
+    uint8_t key[0x10]; // Encrypted klicensee
+    uint64_t timestamp; // Timestamp
     uint64_t expiration; //Always 0
     uint8_t r[0x14];
     uint8_t s[0x14];
@@ -229,9 +228,9 @@ int rap2rif(const uint8_t* idps_key, const char* exdata_path, const char* rap_fi
 	}
 
 	memset(&rif, 0, sizeof(struct rif));
-	rif.version = 1;
-	rif.licenseType = 0x00010002;
-	rif.timestamp = 0x0000012F415C0000;
+	rif.version = htonl(1);
+	rif.licenseType = htonl(0x00010002);
+	rif.timestamp = htonll(0x0000012F415C0000);
 	rif.expiration = 0;
 	rif.accountid = actdat->accountId;
 
@@ -269,7 +268,7 @@ int rap2rif(const uint8_t* idps_key, const char* exdata_path, const char* rap_fi
     strcpy(strrchr(path, '.'), ".rif");
 
 	printf("Saving rif to '%s'...\n", path);
-	if (write_file(path, (uint8_t*) &rif, sizeof(struct rif)) < 0) {
+	if (write_file(path, (uint8_t *) &rif, sizeof(struct rif)) < 0) {
 		printf("Error: unable to create rif file\n");
 		goto fail;
 	}
@@ -318,7 +317,7 @@ int rif2klicensee(const uint8_t* idps_key, const char* exdata_path, const char* 
     aesecb128_encrypt(idps_key, npdrm_const_key, encryptedConst);
 
 	if (htonl(rif2.actDatIndex) * 0x10 >= 0x800) {
-		printf("actDatIndex is out of bounds: %d\n", htonl(rif2.actDatIndex * 0x10));
+		printf("Error: actDatIndex is out of bounds: %d\n", htonl(rif2.actDatIndex * 0x10));
 		goto fail;
 	}
 
