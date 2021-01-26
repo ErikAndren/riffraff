@@ -17,6 +17,7 @@
 #include <mbedtls/sha1.h>
 
 #include <arpa/inet.h>
+#include "endian.h"
 
 #include "util.h"
 #include "ecdsa.h"
@@ -228,9 +229,9 @@ int rap2rif(const uint8_t* idps_key, const char* exdata_path, const char* rap_fi
 	}
 
 	memset(&rif, 0, sizeof(struct rif));
-	rif.version = htonl(1);
-	rif.licenseType = htonl(0x00010002);
-	rif.timestamp = htonll(0x0000012F415C0000);
+	rif.version = htobe32(1);
+	rif.licenseType = htobe32(0x00010002);
+	rif.timestamp = htobe64(0x0000012F415C0000);
 	rif.expiration = 0;
 	rif.accountid = actdat->accountId;
 
@@ -316,12 +317,12 @@ int rif2klicensee(const uint8_t* idps_key, const char* exdata_path, const char* 
 
     aesecb128_encrypt(idps_key, npdrm_const_key, encryptedConst);
 
-	if (htonl(rif2.actDatIndex) * 0x10 >= 0x800) {
-		printf("Error: actDatIndex is out of bounds: %d\n", htonl(rif2.actDatIndex * 0x10));
+	if (htobe32(rif2.actDatIndex) * 0x10 >= 0x800) {
+		printf("Error: actDatIndex is out of bounds: %d\n", htobe32(rif2.actDatIndex * 0x10));
 		goto fail;
 	}
 
-    aesecb128_decrypt(encryptedConst, &actdat->keyTable[htonl(rif2.actDatIndex) * 0x10], decryptedConst);
+    aesecb128_decrypt(encryptedConst, &actdat->keyTable[htobe32(rif2.actDatIndex) * 0x10], decryptedConst);
 
     aesecb128_decrypt(decryptedConst, rif2.key, rifKey);
 
