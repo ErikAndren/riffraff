@@ -1,6 +1,6 @@
 CC=gcc
 
-CFLAGS=-I/usr/local/Cellar/mbedtls/2.25.0/include/ -lmbedtls -lmbedcrypto -g
+CFLAGS=-I/usr/local/Cellar/mbedtls/2.25.0/include/ -lmbedcrypto -g
 
 FILES = util.c ecdsa.c rifrap.c main.c
 
