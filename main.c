@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
 		printf("First argument is path to idps_key (16 bytes)\n");
 		printf("Second argument is path to where act.dat is located\n");
 		printf("Third argument is path to rif/rap file\n");
-		printf("Fourth argument is the path where the generated rap is stored\n");
+		printf("Fourth argument is the path where the generated rif/rap is to be stored\n");
 
 		return -1;
 	}
