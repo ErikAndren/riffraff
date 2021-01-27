@@ -1,6 +1,6 @@
 CC=gcc
 
-CFLAGS=-I/usr/local/Cellar/mbedtls/2.25.0/include/ -lmbedtls -lmbedcrypto
+CFLAGS=-I/usr/local/Cellar/mbedtls/2.25.0/include/ -lmbedtls -lmbedcrypto -g
 
 FILES = util.c ecdsa.c rifrap.c main.c
 
@@ -13,4 +13,4 @@ str2idps: str2idps.c
 	$(CC) -o $@ $(CFLAGS) str2idps.c
 
 clean:
-	@rm -f riffraff str2idps *~
+	@rm -rf riffraff str2idps *~ *.dSYM/
